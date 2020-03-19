@@ -1,0 +1,18 @@
+---
+kind: pipeline
+name: default
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: test
+  image: golang:1.13
+  commands:
+  - go test ./...
+---
+kind: signature
+hmac: 9e30feaddbddfeff5ec204959459fe14257786edb6a14f6e2e26403405698787
+
+...
