@@ -1,6 +1,7 @@
 [![Build Status](https://cloud.drone.io/api/badges/rugwirobaker/toaster/status.svg)](https://cloud.drone.io/rugwirobaker/toaster)
 [![codebeat badge](https://codebeat.co/badges/007155a0-c7a5-495e-bda9-6e4b786f69e4)](https://codebeat.co/projects/github-com-rugwirobaker-toaster-master)
 [![Maintainability](https://api.codeclimate.com/v1/badges/2fef6f0923ddec6db92e/maintainability)](https://codeclimate.com/github/rugwirobaker/toaster/maintainability)
+[![codecov](https://codecov.io/gh/rugwirobaker/toaster/branch/master/graph/badge.svg)](https://codecov.io/gh/rugwirobaker/toaster)
 
 # Toaster
 
