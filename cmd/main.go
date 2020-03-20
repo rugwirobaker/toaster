@@ -19,4 +19,6 @@ func main() {
 	fmt.Printf("To exit this prompt type in: '\\q'\n\n")
 
 	toaster.Start(os.Stdin, os.Stdout)
+
+	os.Exit(0)
 }
