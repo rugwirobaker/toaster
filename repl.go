@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"strings"
 )
 
 // PROMPT output
@@ -23,9 +24,9 @@ func Start(in io.Reader, out io.Writer) {
 		if line == "\\q" {
 			return
 		}
-		// sc := NewScanner(line)
-		// for tok := sc.NextToken(); tok.Kind != EOF; tok = sc.NextToken() {
-		// 	fmt.Printf("%+v\n", tok)
-		// }
+		sc := NewScanner(strings.NewReader(line))
+		for tok := sc.Scan(); tok.Kind != EOF; tok = sc.Scan() {
+			fmt.Printf("%+v\n", tok)
+		}
 	}
 }
