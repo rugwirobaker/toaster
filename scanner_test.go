@@ -18,6 +18,7 @@ func TestScanner_Scan(t *testing.T) {
 		{s: ` `, kind: WS, lit: " "},
 		{s: "\t", kind: WS, lit: "\t"},
 		{s: "\n", kind: WS, lit: "\n"},
+		{s: `;`, kind: SEMICOLON, lit: ";"},
 
 		// Misc characters
 		{s: `*`, kind: ASTERISK, lit: "*"},
@@ -27,8 +28,18 @@ func TestScanner_Scan(t *testing.T) {
 		{s: `Zx12_3U_-`, kind: IDENT, lit: `Zx12_3U_`},
 
 		// Keywords
-		{s: `FROM`, kind: FROM, lit: "FROM"},
+		{s: `CREATE`, kind: CREATE, lit: "CREATE"},
+		{s: `TABLE`, kind: TABLE, lit: "TABLE"},
+		{s: `INSERT`, kind: INSERT, lit: "INSERT"},
 		{s: `SELECT`, kind: SELECT, lit: "SELECT"},
+		{s: `UPDATE`, kind: UPDATE, lit: "UPDATE"},
+		{s: `DELETE`, kind: DELETE, lit: "DELETE"},
+		{s: `FROM`, kind: FROM, lit: "FROM"},
+		{s: `WHERE`, kind: WHERE, lit: "WHERE"},
+		{s: `INTO`, kind: INTO, lit: "INTO"},
+		{s: `SET`, kind: SET, lit: "SET"},
+		{s: `AS`, kind: AS, lit: "AS"},
+		{s: `VALUES`, kind: VALUES, lit: "VALUES"},
 	}
 
 	for i, tt := range tests {
