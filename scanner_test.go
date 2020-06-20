@@ -1,117 +1,43 @@
 package toaster
 
 import (
+	"strings"
 	"testing"
 )
 
-func TestNextToken(t *testing.T) {
-	input := `
-		CREATE TABLE users (id INT, name TEXT, active BOOL);
-		INSERT INTO users VALUES (1, 'Phil', TRUE);
-		INSERT INTO users (id, name, active) VALUES (1, 'Phil', FALSE);
-		SELECT * FROM users WHERE id=1;
-		UPDATE users SET name='Jones' WHERE id=1;
-		DELETE FROM users WHERE id=1;
-	`
-
-	// SELECT id, name FROM users where id=1;
-
-	tests := []struct {
-		expectedKind    Kind
-		expectedLiteral string
+// Ensure the scanner can scan tokens correctly.
+func TestScanner_Scan(t *testing.T) {
+	var tests = []struct {
+		s    string
+		kind Kind
+		lit  string
 	}{
-		{CREATE, "create"},
-		{TABLE, "table"},
-		{IDENT, "users"},
-		{LPAREN, "("},
-		{IDENT, "id"},
-		{INT, "int"},
-		{COMMA, ","},
-		{IDENT, "name"},
-		{TEXT, "text"},
-		{COMMA, ","},
-		{IDENT, "active"},
-		{BOOL, "bool"},
-		{RPAREN, ")"},
-		{SEMICOLON, ";"},
+		// Special tokens (EOF, ILLEGAL, WS)
+		{s: ``, kind: EOF},
+		{s: `#`, kind: ILLEGAL, lit: `#`},
+		{s: ` `, kind: WS, lit: " "},
+		{s: "\t", kind: WS, lit: "\t"},
+		{s: "\n", kind: WS, lit: "\n"},
 
-		{INSERT, "insert"},
-		{INTO, "into"},
-		{IDENT, "users"},
-		{VALUES, "values"},
-		{LPAREN, "("},
-		{NUMERIC, "1"},
-		{COMMA, ","},
-		{STRING, "Phil"},
-		{COMMA, ","},
-		{TRUE, "true"},
-		{RPAREN, ")"},
-		{SEMICOLON, ";"},
+		// Misc characters
+		{s: `*`, kind: ASTERISK, lit: "*"},
 
-		{INSERT, "insert"},
-		{INTO, "into"},
-		{IDENT, "users"},
-		{LPAREN, "("},
-		{IDENT, "id"},
-		{COMMA, ","},
-		{IDENT, "name"},
-		{COMMA, ","},
-		{IDENT, "active"},
-		{RPAREN, ")"},
-		{VALUES, "values"},
-		{LPAREN, "("},
-		{NUMERIC, "1"},
-		{COMMA, ","},
-		{STRING, "Phil"},
-		{COMMA, ","},
-		{FALSE, "false"},
-		{RPAREN, ")"},
-		{SEMICOLON, ";"},
+		// Identifiers
+		{s: `foo`, kind: IDENT, lit: `foo`},
+		{s: `Zx12_3U_-`, kind: IDENT, lit: `Zx12_3U_`},
 
-		{SELECT, "select"},
-		{ASTERIX, "*"},
-		{FROM, "from"},
-		{IDENT, "users"},
-		{WHERE, "where"},
-		{IDENT, "id"},
-		{ASSIGN, "="},
-		{NUMERIC, "1"},
-		{SEMICOLON, ";"},
-
-		{UPDATE, "update"},
-		{IDENT, "users"},
-		{SET, "set"},
-		{IDENT, "name"},
-		{ASSIGN, "="},
-		{STRING, "Jones"},
-		{WHERE, "where"},
-		{IDENT, "id"},
-		{ASSIGN, "="},
-		{NUMERIC, "1"},
-		{SEMICOLON, ";"},
-
-		{DELETE, "delete"},
-		{FROM, "from"},
-		{IDENT, "users"},
-		{WHERE, "where"},
-		{IDENT, "id"},
-		{ASSIGN, "="},
-		{NUMERIC, "1"},
-		{SEMICOLON, ";"},
+		// Keywords
+		{s: `FROM`, kind: FROM, lit: "FROM"},
+		{s: `SELECT`, kind: SELECT, lit: "SELECT"},
 	}
 
-	scanner := New(input)
-
-	for i, tc := range tests {
-		tok := scanner.NextToken()
-
-		if tok.Kind != tc.expectedKind {
-			t.Fatalf("tests[%d] - tokentype wrong. expected=%q, got=%q",
-				i, tc.expectedKind, tok.Kind)
-		}
-		if tok.Literal != tc.expectedLiteral {
-			t.Fatalf("tests[%d] - literal wrong. expected=%q, got=%q",
-				i, tc.expectedLiteral, tok.Literal)
+	for i, tt := range tests {
+		s := NewScanner(strings.NewReader(tt.s))
+		tok := s.Scan()
+		if tt.kind != tok.Kind {
+			t.Errorf("%d. %q token mismatch: exp=%q got=%q <%q>", i, tt.s, tt.kind, tok.Kind, tok.Literal)
+		} else if tt.lit != tok.Literal {
+			t.Errorf("%d. %q literal mismatch: exp=%q got=%q", i, tt.s, tt.lit, tok.Literal)
 		}
 	}
 }

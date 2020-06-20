@@ -3,7 +3,7 @@ package toaster
 import "strings"
 
 // Kind ...
-type Kind string
+type Kind int
 
 // Token ...
 type Token struct {
@@ -13,44 +13,42 @@ type Token struct {
 
 // tokens
 const (
-	ILLEGAL = "ILLEGAL"
-	EOF     = "EOF"
+	ILLEGAL Kind = iota
+	EOF
+	WS
+	COMMENT
 
-	//keywords
-	CREATE = "CREATE"
-	TABLE  = "TABLE"
-	AS     = "AS"
-	INSERT = "INSERT"
-	SELECT = "SELECT"
-	UPDATE = "UPDATE"
-	DELETE = "DELETE"
-	WHERE  = "WHERE"
-	FROM   = "FROM"
-	INTO   = "INTO"
-	SET    = "SET"
-	VALUES = "VALUES"
-	BOOL   = "BOOL"
-	TEXT   = "TEXT"
-	INT    = "INT"
-	TRUE   = "TRUE"
-	FALSE  = "FALSE"
-
-	// Identifiers
-	IDENT = "IDENT"
-
-	//datatypes
-	NUMERIC = "NUMERIC"
-	STRING  = "STRING"
+	// Literals
+	IDENT
 
 	// Operators
-	ASSIGN = "="
+	ASSIGN
 
 	// Delimiters
-	ASTERIX   = "*"
-	COMMA     = ","
-	SEMICOLON = ";"
-	LPAREN    = "("
-	RPAREN    = ")"
+	ASTERISK
+	COMMA
+	SEMICOLON
+	LPAREN
+	RPAREN
+
+	//keywords
+	CREATE
+	TABLE
+	AS
+	INSERT
+	SELECT
+	UPDATE
+	DELETE
+	WHERE
+	FROM
+	INTO
+	SET
+	VALUES
+	BOOL
+	TEXT
+	INT
+	TRUE
+	FALSE
 )
 
 var keywords = map[string]Kind{
@@ -71,6 +69,10 @@ var keywords = map[string]Kind{
 	"bool":   BOOL,
 	"true":   TRUE,
 	"false":  FALSE,
+}
+
+func newToken(kind Kind, lit string) Token {
+	return Token{Kind: kind, Literal: lit}
 }
 
 // LookupIdent ...

@@ -1,123 +1,131 @@
 package toaster
 
 import (
-	"strings"
+	"bufio"
+	"bytes"
+	"io"
 )
+
+var eof = rune(0)
 
 // Scanner ...
 type Scanner struct {
-	input    string
-	position int // current position in input (points to current char)
-	next     int // current reading position in input (after current char)
-	ch       byte
+	r *bufio.Reader
 }
 
-// New scanner
-func New(input string) *Scanner {
-	scanner := &Scanner{input: input}
-	scanner.readChar()
-	return scanner
+// NewScanner instantiates a new scanner instance with input
+func NewScanner(r io.Reader) *Scanner {
+	return &Scanner{r: bufio.NewReader(r)}
 }
 
-// NextToken ...
-func (sc *Scanner) NextToken() Token {
-	var tok Token
+// Scan returns the next token and literal value.
+func (s *Scanner) Scan() (tok Token) {
+	// Read the next rune.
+	ch := s.read()
 
-	sc.skipWhitespace()
+	// If we see whitespace then consume all contiguous whitespace.
+	// If we see a letter, or certain acceptable special characters, then consume
+	// as an ident or reserved word.
+	if isWhitespace(ch) {
+		s.unread()
+		return s.scanWhitespace()
+	}
 
-	switch sc.ch {
+	switch ch {
 	case '*':
-		tok = newToken(ASTERIX, sc.ch)
+		return newToken(ASTERISK, string(ch))
 	case '=':
-		tok = newToken(ASSIGN, sc.ch)
+		return newToken(ASSIGN, string(ch))
 	case ';':
-		tok = newToken(SEMICOLON, sc.ch)
+		return newToken(SEMICOLON, string(ch))
 	case '(':
-		tok = newToken(LPAREN, sc.ch)
+		return newToken(LPAREN, string(ch))
 	case ')':
-		tok = newToken(RPAREN, sc.ch)
+		return newToken(RPAREN, string(ch))
 	case ',':
-		tok = newToken(COMMA, sc.ch)
-	case 0:
-		tok.Literal = ""
-		tok.Kind = EOF
-	case '\'':
-		tok.Kind = STRING
-		tok.Literal = sc.readString()
+		return newToken(COMMA, string(ch))
+	case eof:
+		return newToken(EOF, "")
 	default:
-		if isLetter(sc.ch) {
-			tok.Literal = sc.readIdentifier()
-			tok.Kind = LookupIdent(tok.Literal)
-			if tok.Kind != IDENT {
-				tok.Literal = strings.ToLower(tok.Literal)
-			}
-			return tok
+		if isLetter(ch) {
+			s.unread()
+			return s.scanIdent()
 		}
-		if isDigit(sc.ch) {
-			tok.Kind = NUMERIC
-			tok.Literal = sc.readNumber()
-			return tok
-		}
-		tok = newToken(ILLEGAL, sc.ch)
-
 	}
-
-	sc.readChar()
-	return tok
+	return newToken(ILLEGAL, string(ch))
 }
 
-func newToken(tokenKind Kind, ch byte) Token {
-	return Token{Kind: tokenKind, Literal: string(ch)}
-}
+// scanWhitespace consumes the current rune and all contiguous whitespace.
+func (s *Scanner) scanWhitespace() (tok Token) {
+	// Create a buffer and read the current character into it.
+	var buf bytes.Buffer
+	buf.WriteRune(s.read())
 
-func (sc *Scanner) readChar() {
-	// check if we have reached the end of input
-	if sc.next >= len(sc.input) {
-		sc.ch = 0
-	} else {
-		sc.ch = sc.input[sc.next]
-	}
-	sc.position = sc.next
-	sc.next++
-}
-
-func (sc *Scanner) readIdentifier() string {
-	position := sc.position
-	for isLetter(sc.ch) {
-		sc.readChar()
-	}
-	return sc.input[position:sc.position]
-}
-
-func (sc *Scanner) skipWhitespace() {
-	for sc.ch == ' ' || sc.ch == '\t' || sc.ch == '\n' || sc.ch == '\r' {
-		sc.readChar()
-	}
-}
-
-func (sc *Scanner) readNumber() string {
-	position := sc.position
-	for isDigit(sc.ch) {
-		sc.readChar()
-	}
-	return sc.input[position:sc.position]
-}
-
-func (sc *Scanner) readString() string {
-	position := sc.position + 1
+	// Read every subsequent whitespace character into the buffer.
+	// Non-whitespace characters and EOF will cause the loop to exit.
 	for {
-		sc.readChar()
-		if sc.ch == '\'' || sc.ch == 0 {
+		if ch := s.read(); ch == eof {
 			break
+		} else if !isWhitespace(ch) {
+			s.unread()
+			break
+		} else {
+			buf.WriteRune(ch)
 		}
 	}
-	return sc.input[position:sc.position]
+	return newToken(WS, buf.String())
 }
 
-func isDigit(ch byte) bool {
-	return '0' <= ch && ch <= '9'
+// scanIdent consumes the current rune and all contiguous ident runes.
+func (s *Scanner) scanIdent() (tok Token) {
+	// Create a buffer and read the current character into it.
+	var buf bytes.Buffer
+	buf.WriteRune(s.read())
+
+	// Read every subsequent ident character into the buffer.
+	// Non-ident characters and EOF will cause the loop to exit.
+	for {
+		if ch := s.read(); ch == eof {
+			break
+		} else if !isLetter(ch) && !isDigit(ch) && ch != '_' {
+			s.unread()
+			break
+		} else {
+			_, _ = buf.WriteRune(ch)
+		}
+	}
+	lit := buf.String()
+
+	if kind := LookupIdent(lit); kind != IDENT {
+		return newToken(kind, lit)
+	}
+	return newToken(IDENT, lit)
 }
 
-func isLetter(ch byte) bool {
-	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
+// read reads the next rune from the buffered reader.
+// Returns the rune(0) if an error occurs (or io.EOF is returned).
+func (s *Scanner) read() rune {
+	ch, _, err := s.r.ReadRune()
+
+	if err != nil {
+		return eof
+	}
+	return ch
+}
+
+// unread places the previously read rune back on the reader.
+func (s *Scanner) unread() { _ = s.r.UnreadRune() }
+
+// isWhitespace returns true if the rune is a space, tab, or newline.
+func isWhitespace(ch rune) bool {
+	return ch == ' ' || ch == '\t' || ch == '\n'
+}
+
+func isLetter(ch rune) bool {
+	return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
+}
+
+// isDigit returns true if the rune is a digit.
+func isDigit(ch rune) bool {
+	return (ch >= '0' && ch <= '9')
 }

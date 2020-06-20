@@ -23,9 +23,9 @@ func Start(in io.Reader, out io.Writer) {
 		if line == "\\q" {
 			return
 		}
-		sc := New(line)
-		for tok := sc.NextToken(); tok.Kind != EOF; tok = sc.NextToken() {
-			fmt.Printf("%+v\n", tok)
-		}
+		// sc := NewScanner(line)
+		// for tok := sc.NextToken(); tok.Kind != EOF; tok = sc.NextToken() {
+		// 	fmt.Printf("%+v\n", tok)
+		// }
 	}
 }
