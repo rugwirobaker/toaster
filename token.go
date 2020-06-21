@@ -20,8 +20,10 @@ const (
 
 	// Literals
 	IDENT
-	NUMBER
-	STRING // "abc"
+	NUMBER    // 12345.67
+	STRING    // "abc"
+	BADSTRING // "abc
+	BADESCAPE // \q
 
 	// Operators
 	ASSIGN

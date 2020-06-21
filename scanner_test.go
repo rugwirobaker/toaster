@@ -51,7 +51,15 @@ func TestScanner_Scan(t *testing.T) {
 		{input: `TRUE`, kind: TRUE, lit: "true"},
 
 		// // values
-		// {input: `\'this is a string\'`, kind: STRING, lit: "this is a string"},
+		{input: `'this is a string'`, kind: STRING, lit: "this is a string"},
+		// Strings
+		{input: `'testing 123!'`, kind: STRING, lit: `testing 123!`},
+		{input: `'foo\nbar'`, kind: STRING, lit: "foo\nbar"},
+		{input: `'foo\\bar'`, kind: STRING, lit: "foo\\bar"},
+		{input: `'test`, kind: BADSTRING, lit: `test`},
+		{input: "'test\nfoo", kind: BADSTRING, lit: `test`},
+		{input: `'test\g'`, kind: BADESCAPE, lit: `\g`},
+
 		{input: `1234`, kind: NUMBER, lit: "1234"},
 		{input: `123.4`, kind: NUMBER, lit: "123.4"},
 	}

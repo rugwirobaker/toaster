@@ -3,6 +3,7 @@ package toaster
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"io"
 	"strings"
 )
@@ -134,18 +135,14 @@ func (s *Scanner) scanNumber() (tok Token) {
 func (s *Scanner) scanString() (tok Token) {
 	var buf bytes.Buffer
 	buf.WriteRune(s.read())
+	s.unread()
 
-	for {
-		if ch := s.read(); ch == eof {
-			break
-		} else if ch == '\'' || ch == 0 {
-			break
-		} else {
-			_, _ = buf.WriteRune(ch)
-		}
+	lit, err := ScanString(s.r)
+	if err == errBadString {
+		return newToken(BADSTRING, lit)
+	} else if err == errBadEscape {
+		return newToken(BADESCAPE, lit)
 	}
-	lit := buf.String()
-
 	return newToken(STRING, lit)
 }
 
@@ -176,3 +173,41 @@ func isLetter(ch rune) bool {
 func isDigit(ch rune) bool {
 	return (ch >= '0' && ch <= '9')
 }
+
+// ScanString reads a quoted string from a rune reader.
+func ScanString(r *bufio.Reader) (string, error) {
+	ending, _, err := r.ReadRune()
+	if err != nil {
+		return "", errBadString
+	}
+
+	var buf bytes.Buffer
+	for {
+		ch, _, err := r.ReadRune()
+		if ch == ending {
+			return buf.String(), nil
+		} else if err != nil || ch == '\n' {
+			return buf.String(), errBadString
+		} else if ch == '\\' {
+			// If the next character is an escape then write the escaped char.
+			// If it's not a valid escape then return an error.
+			ch1, _, _ := r.ReadRune()
+			if ch1 == 'n' {
+				_, _ = buf.WriteRune('\n')
+			} else if ch1 == '\\' {
+				_, _ = buf.WriteRune('\\')
+			} else if ch1 == '"' {
+				_, _ = buf.WriteRune('"')
+			} else if ch1 == '\'' {
+				_, _ = buf.WriteRune('\'')
+			} else {
+				return string(ch) + string(ch1), errBadEscape
+			}
+		} else {
+			_, _ = buf.WriteRune(ch)
+		}
+	}
+}
+
+var errBadString = errors.New("bad string")
+var errBadEscape = errors.New("bad escape")
