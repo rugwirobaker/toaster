@@ -73,14 +73,15 @@ func (s *Scanner) scanWhitespace() (tok Token) {
 	// Read every subsequent whitespace character into the buffer.
 	// Non-whitespace characters and EOF will cause the loop to exit.
 	for {
-		if ch := s.read(); ch == eof {
+		ch := s.read()
+		if ch == eof {
 			break
-		} else if !isWhitespace(ch) {
+		}
+		if !isWhitespace(ch) {
 			s.unread()
 			break
-		} else {
-			buf.WriteRune(ch)
 		}
+		_, _ = buf.WriteRune(ch)
 	}
 	return newToken(WS, buf.String())
 }
@@ -94,15 +95,17 @@ func (s *Scanner) scanIdent() (tok Token) {
 	// Read every subsequent ident character into the buffer.
 	// Non-ident characters and EOF will cause the loop to exit.
 	for {
-		if ch := s.read(); ch == eof {
+		ch := s.read()
+		if ch == eof {
 			break
-		} else if !isLetter(ch) && !isDigit(ch) && ch != '_' {
+		}
+		if !isLetter(ch) && !isDigit(ch) && ch != '_' {
 			s.unread()
 			break
-		} else {
-			_, _ = buf.WriteRune(ch)
 		}
+		_, _ = buf.WriteRune(ch)
 	}
+
 	lit := buf.String()
 
 	if kind := LookupIdent(lit); kind != IDENT {
@@ -118,14 +121,15 @@ func (s *Scanner) scanNumber() (tok Token) {
 	// Read every subsequent ident character into the buffer.
 	// Non-ident characters and EOF will cause the loop to exit.
 	for {
-		if ch := s.read(); ch == eof {
+		ch := s.read()
+		if ch == eof {
 			break
-		} else if !isDigit(ch) && ch != '.' {
+		}
+		if !isDigit(ch) && ch != '.' {
 			s.unread()
 			break
-		} else {
-			_, _ = buf.WriteRune(ch)
 		}
+		_, _ = buf.WriteRune(ch)
 	}
 	lit := buf.String()
 
@@ -182,13 +186,16 @@ func ScanString(r *bufio.Reader) (string, error) {
 	}
 
 	var buf bytes.Buffer
+
 	for {
 		ch, _, err := r.ReadRune()
 		if ch == ending {
 			return buf.String(), nil
-		} else if err != nil || ch == '\n' {
+		}
+		if err != nil || ch == '\n' {
 			return buf.String(), errBadString
-		} else if ch == '\\' {
+		}
+		if ch == '\\' {
 			// If the next character is an escape then write the escaped char.
 			// If it's not a valid escape then return an error.
 			ch1, _, _ := r.ReadRune()
