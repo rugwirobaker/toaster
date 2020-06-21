@@ -26,7 +26,7 @@ func Start(in io.Reader, out io.Writer) {
 		}
 		sc := NewScanner(strings.NewReader(line))
 		for tok := sc.Scan(); tok.Kind != EOF; tok = sc.Scan() {
-			fmt.Printf("%+v\n", tok)
+			fmt.Printf("{Literal:%s Kind:%s}\n", tok.Literal, tok.String())
 		}
 	}
 }
