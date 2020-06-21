@@ -1,9 +1,11 @@
 package toaster
 
-import "strings"
+import (
+	"strings"
+)
 
 // Kind ...
-type Kind string
+type Kind int
 
 // Token ...
 type Token struct {
@@ -13,64 +15,110 @@ type Token struct {
 
 // tokens
 const (
-	ILLEGAL = "ILLEGAL"
-	EOF     = "EOF"
+	ILLEGAL Kind = iota
+	EOF
+	WS
+	COMMENT
 
-	//keywords
-	CREATE = "CREATE"
-	TABLE  = "TABLE"
-	AS     = "AS"
-	INSERT = "INSERT"
-	SELECT = "SELECT"
-	UPDATE = "UPDATE"
-	DELETE = "DELETE"
-	WHERE  = "WHERE"
-	FROM   = "FROM"
-	INTO   = "INTO"
-	SET    = "SET"
-	VALUES = "VALUES"
-	BOOL   = "BOOL"
-	TEXT   = "TEXT"
-	INT    = "INT"
-	TRUE   = "TRUE"
-	FALSE  = "FALSE"
+	// Literals
+	IDENT
+	NUMBER    // 12345.67
+	STRING    // "abc"
+	BADSTRING // "abc
+	BADESCAPE // \q
 
-	// Identifiers
-	IDENT = "IDENT"
-
-	//datatypes
-	NUMERIC = "NUMERIC"
-	STRING  = "STRING"
+	//boolean literals
+	TRUE
+	FALSE
 
 	// Operators
-	ASSIGN = "="
+	ASSIGN
 
 	// Delimiters
-	ASTERIX   = "*"
-	COMMA     = ","
-	SEMICOLON = ";"
-	LPAREN    = "("
-	RPAREN    = ")"
+	ASTERISK
+	COMMA
+	SEMICOLON
+	LPAREN
+	RPAREN
+
+	keywordBeg
+	//keywords
+	AS
+	BOOL
+	CREATE
+	DELETE
+	FROM
+	INSERT
+	INT
+	INTO
+	SELECT
+	SET
+	TABLE
+	TEXT
+	UPDATE
+	WHERE
+	VALUES
+	keywordEnd
 )
 
-var keywords = map[string]Kind{
-	"create": CREATE,
-	"table":  TABLE,
-	"insert": INSERT,
-	"select": SELECT,
-	"update": UPDATE,
-	"delete": DELETE,
-	"where":  WHERE,
-	"from":   FROM,
-	"into":   INTO,
-	"set":    SET,
-	"as":     AS,
-	"values": VALUES,
-	"text":   TEXT,
-	"int":    INT,
-	"bool":   BOOL,
-	"true":   TRUE,
-	"false":  FALSE,
+var tokens = [...]string{
+	ILLEGAL: "ILLEGAL",
+	EOF:     "EOF",
+	WS:      "WS",
+
+	IDENT:     "IDENT",
+	NUMBER:    "NUMBER",
+	STRING:    "STRING",
+	BADSTRING: "BADSTRING",
+	BADESCAPE: "BADESCAPE",
+
+	TRUE:  "true",
+	FALSE: "false",
+
+	ASSIGN: "=",
+
+	ASTERISK:  "*",
+	COMMA:     ",",
+	SEMICOLON: ";",
+	LPAREN:    "(",
+	RPAREN:    ")",
+
+	AS:     "as",
+	BOOL:   "bool",
+	CREATE: "create",
+	DELETE: "delete",
+	FROM:   "from",
+	INSERT: "insert",
+	INT:    "int",
+	INTO:   "into",
+	SELECT: "select",
+	SET:    "set",
+	TABLE:  "table",
+	TEXT:   "text",
+	UPDATE: "update",
+	VALUES: "values",
+	WHERE:  "where",
+}
+
+var keywords map[string]Kind
+
+func init() {
+	keywords = make(map[string]Kind)
+
+	for tok := keywordBeg + 1; tok < keywordEnd; tok++ {
+		keywords[strings.ToLower(tokens[tok])] = tok
+	}
+
+	keywords["true"] = TRUE
+	keywords["false"] = FALSE
+}
+
+// String returns the string representation of the token.
+func (tok Token) String() string {
+	if tok.Kind >= 0 && tok.Kind < Kind(len(tokens)) {
+		return tokens[tok.Kind]
+	}
+	return ""
 }
 
 // LookupIdent ...
@@ -79,4 +127,8 @@ func LookupIdent(ident string) Kind {
 		return tok
 	}
 	return IDENT
+}
+
+func newToken(kind Kind, lit string) Token {
+	return Token{Kind: kind, Literal: lit}
 }
