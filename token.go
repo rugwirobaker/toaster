@@ -20,6 +20,8 @@ const (
 
 	// Literals
 	IDENT
+	NUMBER
+	STRING // "abc"
 
 	// Operators
 	ASSIGN

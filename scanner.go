@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"io"
+	"strings"
 )
 
 var eof = rune(0)
@@ -44,12 +45,19 @@ func (s *Scanner) Scan() (tok Token) {
 		return newToken(RPAREN, string(ch))
 	case ',':
 		return newToken(COMMA, string(ch))
+	case '\'':
+		s.unread()
+		return s.scanString()
 	case eof:
 		return newToken(EOF, "")
 	default:
 		if isLetter(ch) {
 			s.unread()
 			return s.scanIdent()
+		}
+		if isDigit(ch) {
+			s.unread()
+			return s.scanNumber()
 		}
 	}
 	return newToken(ILLEGAL, string(ch))
@@ -97,9 +105,48 @@ func (s *Scanner) scanIdent() (tok Token) {
 	lit := buf.String()
 
 	if kind := LookupIdent(lit); kind != IDENT {
-		return newToken(kind, lit)
+		return newToken(kind, strings.ToLower(lit))
 	}
 	return newToken(IDENT, lit)
+}
+
+func (s *Scanner) scanNumber() (tok Token) {
+	var buf bytes.Buffer
+	buf.WriteRune(s.read())
+
+	// Read every subsequent ident character into the buffer.
+	// Non-ident characters and EOF will cause the loop to exit.
+	for {
+		if ch := s.read(); ch == eof {
+			break
+		} else if !isDigit(ch) && ch != '.' {
+			s.unread()
+			break
+		} else {
+			_, _ = buf.WriteRune(ch)
+		}
+	}
+	lit := buf.String()
+
+	return newToken(NUMBER, lit)
+}
+
+func (s *Scanner) scanString() (tok Token) {
+	var buf bytes.Buffer
+	buf.WriteRune(s.read())
+
+	for {
+		if ch := s.read(); ch == eof {
+			break
+		} else if ch == '\'' || ch == 0 {
+			break
+		} else {
+			_, _ = buf.WriteRune(ch)
+		}
+	}
+	lit := buf.String()
+
+	return newToken(STRING, lit)
 }
 
 // read reads the next rune from the buffered reader.
