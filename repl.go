@@ -15,7 +15,7 @@ func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
 
 	for {
-		fmt.Printf(PROMPT)
+		fmt.Fprintf(out, PROMPT)
 		scanned := scanner.Scan()
 		if !scanned {
 			return
@@ -26,7 +26,7 @@ func Start(in io.Reader, out io.Writer) {
 		}
 		sc := NewScanner(strings.NewReader(line))
 		for tok := sc.Scan(); tok.Kind != EOF; tok = sc.Scan() {
-			fmt.Printf("{Literal:%s Kind:%s}\n", tok.Literal, tok.String())
+			fmt.Fprint(out, fmt.Sprintf("{Literal:%s Kind:%s}\n", tok.Literal, tok.String()))
 		}
 	}
 }
